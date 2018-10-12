@@ -33,5 +33,6 @@
 
 #Folder
 obj/
+build/
 
 *.DS_Store
