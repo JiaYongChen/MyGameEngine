@@ -1,8 +1,9 @@
-#pragma once
+#ifndef _IRUNTIMEMODULE_H_
+#define _IRUNTIMEMODULE_H_
 
 #include "Interface.hpp"
 
-namespace MyGame{
+namespace MyGame {
 	Interface IRuntimeModule{
 		public:
 			virtual ~IRuntimeModule() {};
@@ -14,3 +15,5 @@ namespace MyGame{
 			virtual void Tick() = 0;
 	};
 }
+
+#endif // !_IRUNTIMEMODULE_H_

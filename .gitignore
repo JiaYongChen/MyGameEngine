@@ -34,5 +34,7 @@
 #Folder
 obj/
 build/
+.vscode/
+
 
 *.DS_Store
