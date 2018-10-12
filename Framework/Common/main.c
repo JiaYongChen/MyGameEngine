@@ -1,5 +1,7 @@
 #include <stdio.h>
 
-void main(){
+int main(){
 	printf("Hello Engine!\n");
+
+	return 0;
 }
