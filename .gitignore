@@ -33,3 +33,5 @@
 
 #Folder
 obj/
+
+*.DS_Store
