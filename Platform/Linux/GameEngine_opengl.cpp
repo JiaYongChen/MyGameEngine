@@ -22,13 +22,13 @@ static bool isExtensionSupported(const char *extlist, const char *extension){
 
     /* Extension names should not have space.*/
     where = strchr(extension, ' ');
-    if(where || *extension = '\0'){
+    if(where || *extension == '\0'){
         return false;
     }
 
     /* It takes a bit of care to be fool-proof about parsing the OpenGL extensions string.
         Don`t be fooled by sub-strings, etc.*/
-    for (start = extlist){
+    for (start = extlist;;){
         where = strstr(start, extension);
 
         if(!where) break;
@@ -82,8 +82,9 @@ int main(void){
     xcb_gcontext_t      foreground;
     xcb_gcontext_t      background;
     xcb_generic_event_t *pEvent;
+    xcb_colormap_t      colormap;
     uint32_t            mask = 0;
-    uint32_t            values[2];
+    uint32_t            values[3];
     uint8_t             isQuit = 0;
 
     char title[] = "Game Engine![OpenGL]";
@@ -186,28 +187,18 @@ int main(void){
     /*get the root window*/
     window = pScreen->root;
 
-    Colormap = xcb_generate_id(pConn);
-
-    /*creat black(foreground) graphic context*/
-    foreground = xcb_generate_id(pConn);
-    mask = XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES;
-    values[0] = pScreen->black_pixel;
-    values[1] = 0;
-    xcb_create_gc(pConn, foreground, window, mask, values);
-
-    /*creat white(background) graphic context*/
-    background = xcb_generate_id(pConn);
-    mask = XCB_GC_BACKGROUND | XCB_GC_GRAPHICS_EXPOSURES;
-    values[0] = pScreen->white_pixel;
-    values[1] = 0;
-    xcb_create_gc(pConn, background, window, mask, values);
+    colormap = xcb_generate_id(pConn);
+    xcb_create_colormap(pConn, XCB_COLORMAP_ALLOC_NONE, colormap, window, vi->visualid);
 
     /* create window*/
     window = xcb_generate_id(pConn);
-    mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
-    values[0] = pScreen->white_pixel;
-    values[1] = XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS;
-    xcb_create_window(pConn, XCB_COPY_FROM_PARENT, window, pScreen->root, 20, 20, 640, 480, 10, XCB_WINDOW_CLASS_INPUT_OUTPUT, pScreen->root_visual, mask, values);
+    mask = XCB_CW_COLORMAP | XCB_CW_EVENT_MASK;
+    values[0] = XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS;
+    values[1] = colormap;
+    values[0] = 0;
+    xcb_create_window(pConn, XCB_COPY_FROM_PARENT, window, pScreen->root, 20, 20, 640, 480, 10, XCB_WINDOW_CLASS_INPUT_OUTPUT, vi->visualid, mask, values);
+
+    XFree(vi);
 
     /*set the title of the window*/
     xcb_change_property(pConn, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
@@ -220,12 +211,79 @@ int main(void){
 
     xcb_flush(pConn);
 
+    glxExts = glXQueryExtensionsString(display, default_screen);
+
+    glxCreateContextAttribsARB = (glXCreatecontextAttribsARBProc)glXGetProcAddressARB((const GLubyte *)"glxCreateContextAttribsARB");
+
+    /*Create OpenGl context*/
+    ctxErrorOccurred = false;
+    int (*oldHandler)(Display*, XErrorEvent*) = XSetErrorHandler(&ctxErrorHandler);
+
+    if(!isExtensionSupported(glxExts, "GLX_ARB_create_conntext") || !glxCreateContextAttribsARB){
+        printf("glxCreateContextAttribsARB() not found"" ...using old-style GLX context\n");
+        context = glXCreateNewContext(display, fb_config, GLX_RGBA_TYPE, 0, True);
+        if(!context){
+            fprintf(stderr, "glxCreateNewContext failed\n");
+            return -1;
+        }
+    }else{
+        int context_attribs[] = {GLX_CONTEXT_MAJOR_VERSION_ARB, 4, GLX_CONTEXT_MINOR_VERSION_ARB, 0, None};
+        printf("Creating context\n");
+        context = glxCreateContextAttribsARB(display, fb_config, 0, True, context_attribs);
+
+        XSync(display, False);
+        if(!ctxErrorOccurred && context) printf("Createed GL 3.0 context\n");
+        else{
+            context_attribs[1] = 1;
+            context_attribs[3] = 0;
+            ctxErrorOccurred = false;
+
+            printf("Failed to create Gl 3.0 context"" ... using old_style GLX context\n");
+            context = glxCreateContextAttribsARB(display, fb_config, 0, True, context_attribs);
+        }
+    }
+
+    XSync(display, False);
+    XSetErrorHandler(oldHandler);
+
+    if(ctxErrorOccurred || !context){
+        printf("Failed to create an OpenGl context\n");
+        return -1;
+    }
+
+    if(!glXIsDirect(display, context)){
+        printf("Indirect GLX rendering context obtained\n");
+    }else{
+        printf("Direct GLX rendering context obtained\n");
+    }
+
+    /*Create GLX Window*/
+    glxwindow = glXCreateWindow(display, fb_config, window, 0);
+
+    if(!window){
+        xcb_destroy_window(pConn, window);
+        glXDestroyContext(display, context);
+        fprintf(stderr,"glxDestroyContext failed\n");
+        return -1;
+    }
+
+    drawable = glxwindow;
+
+    /*make OpenGL context current*/
+    if(!glXMakeContextCurrent(display, drawable, drawable, context)){
+        xcb_destroy_window(pConn, window);
+        glXDestroyContext(display, context);
+
+        fprintf(stderr, "glxMakeContextCurrent failed\n");
+        return -1;
+    }
+
     while((pEvent = xcb_wait_for_event(pConn)) && !isQuit){
         switch(pEvent->response_type & ~0x80){
             case XCB_EXPOSE:{
-                xcb_rectangle_t rect = {20,20,60,60};
-                xcb_poly_fill_rectangle(pConn, window, foreground, 1, &rect);
-                xcb_flush(pConn);
+                DrawAQuad();
+                glXSwapBuffers(display, drawable);
+                //xcb_flush(pConn);
             }
                 break;
             case XCB_KEY_PRESS:
@@ -234,6 +292,9 @@ int main(void){
         }
         free(pEvent);
     }
+
+    /*cleanup*/
+    xcb_disconnect(pConn);
 
     return 0;
 }
