@@ -12,7 +12,7 @@
 
 #define GLX_CONTEXT_MAJOR_VERSION_ARB 0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB 0x2092
-typedef GLXContext (*glXCreatecontextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
 //Helper to check for extension string presence. Adapted from:
 // http://www.opengl.org/resources/features/OGLextensions/
@@ -99,12 +99,12 @@ int main(void){
     XVisualInfo *vi;
     GLXDrawable drawable;
     GLXWindow glxwindow;
-    glXCreatecontextAttribsARBProc glxCreateContextAttribsARB;
+    glXCreateContextAttribsARBProc glxCreateContextAttribsARB;
     const char *glxExts;
 
     //Get a matching FB config
     static int visual_attribs[] = {
-        GLX_X_RENDERABLE        , true,
+        GLX_X_RENDERABLE        , True,
         GLX_DRAWABLE_TYPE       , GLX_WINDOW_BIT,
         GLX_RENDER_TYPE         , GLX_RGBA_BIT,
         GLX_X_VISUAL_TYPE       , GLX_TRUE_COLOR,
@@ -126,6 +126,11 @@ int main(void){
     display = XOpenDisplay(NULL);
     if(!display){
         fprintf(stderr, "Can't open display!\n");
+        return -1;
+    }
+
+    if(!glXQueryVersion(display, &glx_major, &glx_minor) || ((glx_major == 1) && (glx_minor < 3)) || (glx_major <1)){
+        fprintf(stderr, "Invalid GLX version\n");
         return -1;
     }
 
@@ -154,7 +159,7 @@ int main(void){
                 if(best_fbc < 0 || (samp_buf && samples > best_num_samp)){
                     best_fbc = i, best_num_samp = samples;
                 }
-                if(worst_fbc || !samp_buf || samples < worst_num_samp){
+                if(worst_fbc < 0 || !samp_buf || samples < worst_num_samp){
                     worst_fbc = i, worst_num_samp = samples;
                 }
             }
@@ -172,7 +177,7 @@ int main(void){
     pConn = XGetXCBConnection(display);
     if(!pConn){
         XCloseDisplay(display);
-        fprintf(stderr, "Can't get xcb connection fron display!\n");
+        fprintf(stderr, "Can't get xcb conection fron display!\n");
         return -1;
     }
 
@@ -182,6 +187,7 @@ int main(void){
     /*find xcb screen*/
     xcb_screen_iterator_t screen_iter = xcb_setup_roots_iterator(xcb_get_setup(pConn));
     for(int screen_num = vi->screen; screen_iter.rem && screen_num > 0; --screen_num, xcb_screen_next(&screen_iter));
+    
     pScreen = screen_iter.data;
 
     /*get the root window*/
@@ -195,7 +201,7 @@ int main(void){
     mask = XCB_CW_COLORMAP | XCB_CW_EVENT_MASK;
     values[0] = XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS;
     values[1] = colormap;
-    values[0] = 0;
+    values[2] = 0;
     xcb_create_window(pConn, XCB_COPY_FROM_PARENT, window, pScreen->root, 20, 20, 640, 480, 10, XCB_WINDOW_CLASS_INPUT_OUTPUT, vi->visualid, mask, values);
 
     XFree(vi);
@@ -204,7 +210,7 @@ int main(void){
     xcb_change_property(pConn, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
 
     /*set the title of the window icon*/
-    xcb_change_property(pConn, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title_icon), title_icon);
+    xcb_change_property(pConn, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_ICON_NAME, XCB_ATOM_STRING, 8, strlen(title_icon), title_icon);
 
     /*map the window on the screen*/
     xcb_map_window(pConn, window);
@@ -213,7 +219,7 @@ int main(void){
 
     glxExts = glXQueryExtensionsString(display, default_screen);
 
-    glxCreateContextAttribsARB = (glXCreatecontextAttribsARBProc)glXGetProcAddressARB((const GLubyte *)"glxCreateContextAttribsARB");
+    glxCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte *)"glxCreateContextAttribsARB");
 
     /*Create OpenGl context*/
     ctxErrorOccurred = false;
@@ -232,7 +238,7 @@ int main(void){
         context = glxCreateContextAttribsARB(display, fb_config, 0, True, context_attribs);
 
         XSync(display, False);
-        if(!ctxErrorOccurred && context) printf("Createed GL 3.0 context\n");
+        if(!ctxErrorOccurred && context) printf("Created GL 3.0 context\n");
         else{
             context_attribs[1] = 1;
             context_attribs[3] = 0;

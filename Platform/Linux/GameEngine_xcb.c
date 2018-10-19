@@ -53,7 +53,7 @@ int main(void){
     xcb_change_property(pConn, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
 
     /*set the title of the window icon*/
-    xcb_change_property(pConn, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title_icon), title_icon);
+    xcb_change_property(pConn, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_ICON_NAME, XCB_ATOM_STRING, 8, strlen(title_icon), title_icon);
 
     /*map the window on the screen*/
     xcb_map_window(pConn, window);
