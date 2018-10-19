@@ -289,7 +289,6 @@ int main(void){
             case XCB_EXPOSE:{
                 DrawAQuad();
                 glXSwapBuffers(display, drawable);
-                //xcb_flush(pConn);
             }
                 break;
             case XCB_KEY_PRESS:
