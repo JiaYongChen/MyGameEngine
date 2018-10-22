@@ -41,7 +41,7 @@ HRESULT CreateGraphicsResources(HWND hWnd){
     return hr;
 }
 
-void DiscardGraphisResources(){
+void DiscardGraphicsResources(){
     SafeRelease(&pRenderTarget);
     SafeRelease(&pLightSlateGrayBrush);
     SafeRelease(&pCornflowerBlueBrush);
@@ -76,7 +76,7 @@ int  WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLi
     RegisterClassEx(&wc);
 
     //create the window and use the result as the handle
-    hWnd = CreateWindowEx(0, _T("WindowClass"), _T("GameEngine D2D"), WS_OVERLAPPEDWINDOW, 300, 300, 480, 320, NULL, NULL, hInstance, NULL);
+    hWnd = CreateWindowEx(0, _T("WindowClass"), _T("GameEngine D2D"), WS_OVERLAPPEDWINDOW, 100, 100, 960, 640, NULL, NULL, hInstance, NULL);
 
     //display the window on the screen
     ShowWindow(hWnd, nCmdShow);
@@ -120,21 +120,102 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
         } break;
         case WM_PAINT:{
             HRESULT hr = CreateGraphicsResources(hWnd);
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            RECT rec = {10 ,10, 100, 100};
-            HBRUSH brush = (HBRUSH) GetStockObject(BLACK_BRUSH);
+            if (SUCCEEDED(hr)){
+				PAINTSTRUCT ps;
+				BeginPaint(hWnd, &ps);
 
-            FillRect(hdc, &rec, brush);
+				// start build GPU draw command
+				pRenderTarget->BeginDraw();
 
-            EndPaint(hWnd, &ps);
+				// clear the background with white color
+				pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
+
+                // retrieve the size of drawing area
+                D2D1_SIZE_F rtSize = pRenderTarget->GetSize();
+
+                // draw a grid background.
+                int width = static_cast<int>(rtSize.width);
+                int height = static_cast<int>(rtSize.height);
+
+                for (int x = 0; x < width; x += 10)
+                {
+                    pRenderTarget->DrawLine(
+                        D2D1::Point2F(static_cast<FLOAT>(x), 0.0f),
+                        D2D1::Point2F(static_cast<FLOAT>(x), rtSize.height),
+                        pLightSlateGrayBrush,
+                        0.5f
+                        );
+                }
+
+                for (int y = 0; y < height; y += 10)
+                {
+                    pRenderTarget->DrawLine(
+                        D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
+                        D2D1::Point2F(rtSize.width, static_cast<FLOAT>(y)),
+                        pLightSlateGrayBrush,
+                        0.5f
+                        );
+                }
+
+                // draw two rectangles
+                D2D1_RECT_F rectangle1 = D2D1::RectF(
+                     rtSize.width/2 - 50.0f,
+                     rtSize.height/2 - 50.0f,
+                     rtSize.width/2 + 50.0f,
+                     rtSize.height/2 + 50.0f
+                     );
+
+                 D2D1_RECT_F rectangle2 = D2D1::RectF(
+                     rtSize.width/2 - 100.0f,
+                     rtSize.height/2 - 100.0f,
+                     rtSize.width/2 + 100.0f,
+                     rtSize.height/2 + 100.0f
+                     );
+
+                // draw a filled rectangle
+                pRenderTarget->FillRectangle(&rectangle1, pLightSlateGrayBrush);
+
+                // draw a outline only rectangle
+                pRenderTarget->DrawRectangle(&rectangle2, pCornflowerBlueBrush);
+
+				// end GPU draw command building
+				hr = pRenderTarget->EndDraw();
+				if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
+				{
+					DiscardGraphicsResources();
+				}
+
+				EndPaint(hWnd, &ps);
+			}
+		    wasHandled = true;
+        } break;
+        case WM_SIZE:{
+            if (pRenderTarget != nullptr)
+            {
+                RECT rc;
+                GetClientRect(hWnd, &rc);
+
+                D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+
+                pRenderTarget->Resize(size);
+            }
+            wasHandled = true;
         } break;
         case WM_DESTROY:{
-            //close the application entirely
+            DiscardGraphicsResources();
+            if (pFactory) {pFactory->Release(); pFactory=nullptr; }
             PostQuitMessage(0);
-            return 0;
+            result = 0;
+            wasHandled = true;
+        } break;
+        case WM_DISPLAYCHANGE:{
+            InvalidateRect(hWnd, nullptr, false);
+            wasHandled = true;
         } break;
     }
 
-    return DefWindowProc(hWnd, message, wParam, lParam);
+    // Handle any messages the switch statement didn't
+    if (!wasHandled) { result = DefWindowProc (hWnd, message, wParam, lParam); }
+
+    return result;
 }
