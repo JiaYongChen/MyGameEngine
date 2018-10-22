@@ -29,7 +29,7 @@ int  WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLi
     RegisterClassEx(&wc);
 
     //create the window and use the result as the handle
-    hWnd = CreateWindowEx(0, _T("WindowClass"), _T("GameEngine"), WS_OVERLAPPEDWINDOW, 300, 300, 480, 320, NULL, NULL, hInstance, NULL);
+    hWnd = CreateWindowEx(0, _T("WindowClass"), _T("GameEngine GDI"), WS_OVERLAPPEDWINDOW, 300, 300, 480, 320, NULL, NULL, hInstance, NULL);
 
     //display the window on the screen
     ShowWindow(hWnd, nCmdShow);

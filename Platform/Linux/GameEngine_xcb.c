@@ -16,7 +16,7 @@ int main(void){
     uint8_t             isQuit = 0;
 
     char title[] = "Game Engine!";
-    char title_icon[] = "Game Engine! (iconified)";
+    char title_icon[] = "Game Engine! XCB";
 
     /*establish connection to X server*/
     pConn = xcb_connect(0, 0);
