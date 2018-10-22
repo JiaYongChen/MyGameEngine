@@ -3,6 +3,50 @@
 #include <windowsx.h>
 #include <tchar.h>
 
+#include <d2d1.h>
+
+ID2D1Factory *pFactory = nullptr;
+ID2D1HwndRenderTarget *pRenderTarget = nullptr;
+ID2D1SolidColorBrush *pLightSlateGrayBrush = nullptr;
+ID2D1SolidColorBrush *pCornflowerBlueBrush = nullptr;
+
+template<class T>
+inline void SafeRelease(T **ppInterfaceToRelease){
+    if(*ppInterfaceToRelease != nullptr){
+        (*ppInterfaceToRelease)->Release();
+
+        (*ppInterfaceToRelease) = nullptr;
+    }
+}
+
+HRESULT CreateGraphicsResources(HWND hWnd){
+    HRESULT hr = S_OK;
+    if(pRenderTarget == nullptr){
+        RECT rc;
+        GetClientRect(hWnd, &rc);
+
+        D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+
+        hr = pFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd, size), &pRenderTarget);
+
+        if(SUCCEEDED(hr)){
+            hr = pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::LightSlateGray), &pLightSlateGrayBrush);
+        }
+
+        if(SUCCEEDED(hr)){
+            hr = pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::CornflowerBlue), &pCornflowerBlueBrush);
+        }
+    }
+
+    return hr;
+}
+
+void DiscardGraphisResources(){
+    SafeRelease(&pRenderTarget);
+    SafeRelease(&pLightSlateGrayBrush);
+    SafeRelease(&pCornflowerBlueBrush);
+}
+
 //the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -13,6 +57,9 @@ int  WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLi
     //this struct holds information for window class
     WNDCLASSEX wc;
 
+    //initialize COM
+    if(FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE))) return -1;
+
     //clear out the window class for use
     ZeroMemory(&wc, sizeof(WNDCLASSEX));
 
@@ -21,7 +68,7 @@ int  WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLi
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = hInstance;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
     wc.lpszClassName = _T("WindowClass");
 
@@ -29,7 +76,7 @@ int  WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLi
     RegisterClassEx(&wc);
 
     //create the window and use the result as the handle
-    hWnd = CreateWindowEx(0, _T("WindowClass"), _T("GameEngine"), WS_OVERLAPPEDWINDOW, 300, 300, 480, 320, NULL, NULL, hInstance, NULL);
+    hWnd = CreateWindowEx(0, _T("WindowClass"), _T("GameEngine D2D"), WS_OVERLAPPEDWINDOW, 300, 300, 480, 320, NULL, NULL, hInstance, NULL);
 
     //display the window on the screen
     ShowWindow(hWnd, nCmdShow);
@@ -49,15 +96,30 @@ int  WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLi
         DispatchMessage(&msg);
     }
 
+    // uninitialize COM
+    CoUninitialize();
+
     //return this part of the WM_QUIT message to Windows
     return msg.wParam;
 }
 
 //this is the main message handles for the program
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam){
+    LRESULT result = 0;
+    bool wasHandled = false;
+
     //sort through and find what code to run for the message given
     switch(message){
+        case WM_CREATE:{
+            if(FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &pFactory))){
+                result = -1;    // Fail CreateWindowEx.
+                return result;
+            }
+            wasHandled = true;
+            result = 0;
+        } break;
         case WM_PAINT:{
+            HRESULT hr = CreateGraphicsResources(hWnd);
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             RECT rec = {10 ,10, 100, 100};
