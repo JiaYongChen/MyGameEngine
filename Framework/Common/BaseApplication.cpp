@@ -1,18 +1,19 @@
 #include "BaseApplication.hpp"
+#include "stdio.h"
 
-int MyGame::BaseApplication::Initialize(){
+int GameEngine::BaseApplication::Initialize(){
     m_IsQuit = false;
     return 0;
 }
 
-void MyGame::BaseApplication::Finalize(){
+void GameEngine::BaseApplication::Finalize(){
 
 }
 
-void MyGame::BaseApplication::Tick(){
-
+void GameEngine::BaseApplication::Tick(){
+    printf("Trick\n");
 }
 
-bool MyGame::BaseApplication::IsQuit(){
+bool GameEngine::BaseApplication::IsQuit(){
     return m_IsQuit;
 }

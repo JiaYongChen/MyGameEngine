@@ -3,7 +3,7 @@
 
 #include "Interface.hpp"
 
-namespace MyGame {
+namespace GameEngine {
 	Interface IRuntimeModule{
 		public:
 			virtual ~IRuntimeModule() {};

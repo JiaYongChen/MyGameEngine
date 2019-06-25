@@ -3,7 +3,7 @@
 
 #include "../Interface/IApplication.hpp"
 
-namespace MyGame {
+namespace GameEngine {
     class BaseApplication : implements IApplication{
         public:
             ~BaseApplication(){}

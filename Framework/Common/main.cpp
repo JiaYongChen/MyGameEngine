@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include "../Interface/IApplication.hpp"
 
-using namespace MyGame;
+using namespace GameEngine;
 
-namespace MyGame{
+namespace GameEngine{
 	extern IApplication *g_pApplication;
 }
 

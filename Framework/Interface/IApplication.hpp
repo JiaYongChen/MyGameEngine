@@ -4,7 +4,7 @@
 #include "Interface.hpp"
 #include "IRuntimeModule.hpp"
 
-namespace MyGame {
+namespace GameEngine {
     Interface IApplication : implements IRuntimeModule{
         public:
             virtual ~IApplication(){}

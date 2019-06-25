@@ -3,7 +3,7 @@
 
 #include "../Interface/IRuntimeModule.hpp"
 
-namespace MyGame{
+namespace GameEngine{
     class GraphisManager : implements IRuntimeModule{
         public:
             virtual ~GraphisManager() {}
