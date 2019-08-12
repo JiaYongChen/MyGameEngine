@@ -32,7 +32,7 @@ namespace GameEngine {
         void Reset(size_t dataSize, size_t pageSize, size_t alignment);
     
         // allocates a block of memory
-        void *Allocate(void);
+        void* Allocate(void);
     
         // deallocates a block of memory
         void Free(void *p);
@@ -41,7 +41,7 @@ namespace GameEngine {
         void FreeAll(void);
     
     private:
-    
+    #if defined(_DEBUG)
         // fill a free page with debug patterns
         void FillFreePage(PageHeader  *p);
     
@@ -50,27 +50,28 @@ namespace GameEngine {
     
         // fill an allocated block with debug patterns
         void FillAllocatedBlock(BlockHeader *p);
+    #endif
     
         // gets the next block
         BlockHeader *NextBlock(BlockHeader *p);
     
         // the page list
-        PageHeader *m_pageList;
+        PageHeader *m_pPageList;
     
         // the free list
-        BlockHeader *m_freeList;
+        BlockHeader *m_pFreeList;
     
         // size-related data
-        size_t m_dataSize     ;
-        size_t m_pageSize     ;
-        size_t m_alignmentSize;
-        size_t m_blockSize    ;
-        uint32_t m_blocksPerPage;
+        size_t m_szDataSize;
+        size_t m_szPageSize;
+        size_t m_szAlignmentSize;
+        size_t m_szBlockSize;
+        uint32_t m_nBlocksPerPage;
     
         // statistics
-        uint32_t m_numPages     ;
-        uint32_t m_numBlocks    ;
-        uint32_t m_numFreeBlocks;
+        uint32_t m_nPages;
+        uint32_t m_nBlocks;
+        uint32_t m_nFreeBlocks;
     
         // disable copy & assignment
         Allocator(const Allocator &clone);
