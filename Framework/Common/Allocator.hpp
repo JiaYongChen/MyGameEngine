@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cstddef>
 #include <cstdint>
 
@@ -24,6 +25,7 @@ namespace GameEngine {
         static const uint8_t PATTERN_FREE  = 0xFE;
         
         // constructor
+        Allocator();
         Allocator(size_t dataSize, size_t pageSize, size_t alignment);
     
         // destructor
@@ -78,5 +80,4 @@ namespace GameEngine {
         Allocator(const Allocator &clone);
         Allocator &operator=(const Allocator &rhs);
     };
-
 }

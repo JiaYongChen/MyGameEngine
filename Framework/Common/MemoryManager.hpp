@@ -1,5 +1,6 @@
 #pragma once
-#include "../InterFace/IRuntimeModule.hpp"
+
+#include "../Interface/IRuntimeModule.hpp"
 #include "Allocator.hpp"
 #include <new>
 
@@ -18,7 +19,7 @@ namespace GameEngine {
             }
 
         public:
-            virtual ~MemoryManager();
+            virtual ~MemoryManager(){}
 
             virtual int Initialize();
             virtual void Finalize();

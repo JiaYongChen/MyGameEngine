@@ -8,19 +8,22 @@
 
 using namespace GameEngine;
 
+GameEngine::Allocator::Allocator()
+        : m_pPageList(nullptr), m_pFreeList(nullptr), 
+        m_szDataSize(0), m_szPageSize(0), 
+        m_szAlignmentSize(0), m_szBlockSize(0), m_nBlocksPerPage(0){
+}
+
 GameEngine::Allocator::Allocator(size_t dataSize, size_t pageSize, size_t alignment)
-:m_pPageList(nullptr), m_pFreeList(nullptr)
-{
+:m_pPageList(nullptr), m_pFreeList(nullptr){
     Reset(dataSize, pageSize, alignment);
 }
 
-GameEngine::Allocator::~Allocator()
-{
+GameEngine::Allocator::~Allocator(){
     FreeAll();
 }
 
-void GameEngine::Allocator::Reset(size_t dataSize, size_t pageSize, size_t alignment)
-{
+void GameEngine::Allocator::Reset(size_t dataSize, size_t pageSize, size_t alignment){
     FreeAll();
 
     m_szDataSize = dataSize;
@@ -38,8 +41,7 @@ void GameEngine::Allocator::Reset(size_t dataSize, size_t pageSize, size_t align
     m_nBlocksPerPage = (m_szPageSize - sizeof(PageHeader)) / m_szBlockSize;
 }
 
-void* GameEngine::Allocator::Allocate(void)
-{
+void* GameEngine::Allocator::Allocate(void){
     if(!m_pFreeList){
         //allocate a new page
         PageHeader* pNewPage = reinterpret_cast<PageHeader*>(new uint8_t[m_szPageSize]);
@@ -78,8 +80,7 @@ void* GameEngine::Allocator::Allocate(void)
     return reinterpret_cast<void*>(freeBlock);
 }
 
-void GameEngine::Allocator::Free(void* p)
-{
+void GameEngine::Allocator::Free(void* p){
     BlockHeader* block = reinterpret_cast<BlockHeader*>(p);
 
 #if defined(_DEBUG)
@@ -91,8 +92,7 @@ void GameEngine::Allocator::Free(void* p)
     ++m_nFreeBlocks;
 }
 
-void GameEngine::Allocator::FreeAll()
-{
+void GameEngine::Allocator::FreeAll(){
     PageHeader* pPage = m_pPageList;
     while (pPage)
     {
@@ -111,8 +111,7 @@ void GameEngine::Allocator::FreeAll()
 }
 
 #if defined(_DEBUG)
-void GameEngine::Allocator::FillFreePage(PageHeader* pPage)
-{
+void GameEngine::Allocator::FillFreePage(PageHeader* pPage){
     //page header
     pPage->pNext = nullptr;
 
@@ -125,8 +124,7 @@ void GameEngine::Allocator::FillFreePage(PageHeader* pPage)
     }
 }
 
-void GameEngine::Allocator::FillFreeBlock(BlockHeader* pBlock)
-{
+void GameEngine::Allocator::FillFreeBlock(BlockHeader* pBlock){
     //block header + data
     std::memset(pBlock, PATTERN_FREE, m_szBlockSize - m_szAlignmentSize);
 
@@ -134,8 +132,7 @@ void GameEngine::Allocator::FillFreeBlock(BlockHeader* pBlock)
     std::memset(reinterpret_cast<uint8_t*>(pBlock) + m_szBlockSize - m_szAlignmentSize, PATTERN_ALIGN, m_szAlignmentSize);
 }
 
-void GameEngine::Allocator::FillAllocatedBlock(BlockHeader *pBlock)
-{
+void GameEngine::Allocator::FillAllocatedBlock(BlockHeader *pBlock){
     //block header + data
     std::memset(pBlock, PATTERN_ALLOC, m_szBlockSize - m_szAlignmentSize);
 
@@ -144,7 +141,6 @@ void GameEngine::Allocator::FillAllocatedBlock(BlockHeader *pBlock)
 }
 #endif
 
-GameEngine::BlockHeader* GameEngine::Allocator::NextBlock(BlockHeader* pBlock)
-{
+GameEngine::BlockHeader* GameEngine::Allocator::NextBlock(BlockHeader* pBlock){
     return reinterpret_cast<BlockHeader*>(reinterpret_cast<uint8_t*>(pBlock) + m_szBlockSize);
 }
