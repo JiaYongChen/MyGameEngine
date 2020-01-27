@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _ALLOCATOR_HPP_
+#define _ALLOCATOR_HPP_
 
 #include <cstddef>
 #include <cstdint>
@@ -81,3 +82,5 @@ namespace GameEngine {
         Allocator &operator=(const Allocator &rhs);
     };
 }
+
+#endif

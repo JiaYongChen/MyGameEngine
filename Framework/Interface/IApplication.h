@@ -1,8 +1,8 @@
 #ifndef _IAPPLICATION_H_
 #define _IAPPLICATION_H_
 
-#include "Interface.hpp"
-#include "IRuntimeModule.hpp"
+#include "Interface.h"
+#include "IRuntimeModule.h"
 
 namespace GameEngine {
     Interface IApplication : implements IRuntimeModule{

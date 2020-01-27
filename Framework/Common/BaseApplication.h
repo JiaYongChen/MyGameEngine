@@ -1,7 +1,7 @@
 #ifndef _BASEAPPLICATION_H_
 #define _BASEAPPLICATION_H_
 
-#include "../Interface/IApplication.hpp"
+#include "../Interface/IApplication.h"
 
 namespace GameEngine {
     class BaseApplication : implements IApplication{

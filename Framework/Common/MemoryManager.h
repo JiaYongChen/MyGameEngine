@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _MEMORY_MANAGER_HPP_
+#define _MEMORY_MANAGER_HPP_
 
 #include "../Interface/IRuntimeModule.hpp"
 #include "Allocator.hpp"
@@ -35,3 +36,5 @@ namespace GameEngine {
             static Allocator* LookupAllocator(size_t size);
     };
 }
+
+#endif

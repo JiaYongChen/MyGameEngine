@@ -1,7 +1,7 @@
 #ifndef _IRUNTIMEMODULE_H_
 #define _IRUNTIMEMODULE_H_
 
-#include "Interface.hpp"
+#include "Interface.h"
 
 namespace GameEngine {
 	Interface IRuntimeModule{
