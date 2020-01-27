@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../Interface/IApplication.hpp"
+#include "../Interface/IApplication.h"
 
 using namespace GameEngine;
 
