@@ -1,8 +1,8 @@
 #ifndef _MEMORY_MANAGER_HPP_
 #define _MEMORY_MANAGER_HPP_
 
-#include "../Interface/IRuntimeModule.hpp"
-#include "Allocator.hpp"
+#include "../Interface/IRuntimeModule.h"
+#include "Allocator.h"
 #include <new>
 
 namespace GameEngine {
